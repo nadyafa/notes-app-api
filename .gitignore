@@ -3,3 +3,5 @@ Notes API Test.postman_environment.json
 Notes API Test.postman_collection.json
 package-lock.json
 notes-api-webserver.pem
+.env
+.prod.env
