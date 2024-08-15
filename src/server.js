@@ -93,11 +93,26 @@ const init = async () => {
 
     // handling client error internally
     if (response instanceof ClientError) {
+      if (response instanceof ClientError) {
+        const newResponse = h.response({
+          status: "fail",
+          message: response.message,
+        });
+        newResponse.code(response.statusCode);
+        return newResponse;
+      }
+
+      // handling client error by hapi
+      if (!response.isServer) {
+        return h.continue;
+      }
+
+      // handling server error
       const newResponse = h.response({
-        status: "fail",
-        message: response.message,
+        status: "error",
+        message: "Terjadi kegagalan pada server kami",
       });
-      newResponse.code(response.statusCode);
+      newResponse.code(500);
       return newResponse;
     }
 

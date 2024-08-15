@@ -10,9 +10,10 @@ class NotesHandler {
   async postNoteHandler(request, h) {
     this._validator.validateNotePayload(request.payload);
     const { title = "untitle", body, tags } = request.payload;
+    const { id: credentialId } = request.auth.credentials;
 
     // input a note
-    const noteId = await this._service.addNote({ title, body, tags });
+    const noteId = await this._service.addNote({ title, body, tags, owner: credentialId });
 
     const response = h.response({
       status: "success",
@@ -25,48 +26,58 @@ class NotesHandler {
     return response;
   }
 
-  async getNotesHandler() {
-    const notes = await this._service.getNotes();
-    return {
+  async getNotesHandler(request, h) {
+    const { id: credentialId } = request.auth.credentials;
+    const notes = await this._service.getNotes(credentialId);
+
+    return h.response({
       status: "success",
       data: {
         notes,
       },
-    };
+    });
   }
 
   async getNoteByIdHandler(request, h) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    await this._service.verifyNoteOwner(id, credentialId);
     const note = await this._service.getNoteById(id);
-    return {
+
+    return h.response({
       status: "success",
       data: {
         note,
       },
-    };
+    });
   }
 
   async putNoteByIdHandler(request, h) {
     this._validator.validateNotePayload(request.payload);
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
 
+    await this._service.verifyNoteOwner(id, credentialId);
     await this._service.editNoteById(id, request.payload);
 
-    return {
+    return h.response({
       status: "success",
       message: "Catatan berhasil diperbarui",
-    };
+    });
   }
 
   async deleteNoteByIdHandler(request, h) {
     const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
 
+    await this._service.verifyNoteOwner(id, credentialId);
     await this._service.deleteNoteById(id);
 
-    return {
+    return h.response({
       status: "success",
       message: "Catatan berhasil dihapus",
-    };
+    });
   }
 }
 
