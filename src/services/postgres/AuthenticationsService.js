@@ -32,6 +32,8 @@ class AuthenticationsService {
 
   // delete token from DB
   async deleteRefreshToken(token) {
+    await this.verifyRefreshToken(token);
+
     const query = {
       text: "DELETE FROM authentications WHERE token = $1",
       values: [token],
