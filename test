@@ -1,14 +1,14 @@
+// mengimpor dotenv dan menjalankan konfigurasinya
 require("dotenv").config();
 
 const Hapi = require("@hapi/hapi");
 const Jwt = require("@hapi/jwt");
 
-const ClientError = require("./exceptions/ClientError");
-
 // notes
 const notes = require("./api/notes");
 const NotesService = require("./services/postgres/NotesService");
 const NotesValidator = require("./validator/notes");
+const ClientError = require("./exceptions/ClientError");
 
 // users
 const users = require("./api/users");
@@ -16,8 +16,8 @@ const UsersService = require("./services/postgres/UsersService");
 const UsersValidator = require("./validator/users");
 
 // authentications
-const AuthenticationsService = require("./services/postgres/AuthenticationsService");
 const authentications = require("./api/authentications");
+const AuthenticationsService = require("./services/postgres/AuthenticationsService");
 const TokenManager = require("./tokenize/TokenManager");
 const AuthenticationsValidator = require("./validator/authentications");
 
@@ -42,14 +42,14 @@ const init = async () => {
     },
   });
 
-  // external plugin
+  // registrasi plugin eksternal
   await server.register([
     {
       plugin: Jwt,
     },
   ]);
 
-  // JWT authentication strategy
+  // mendefinisikan strategy autentikasi jwt
   server.auth.strategy("notesapp_jwt", "jwt", {
     keys: process.env.ACCESS_TOKEN_KEY,
     verify: {
@@ -66,7 +66,6 @@ const init = async () => {
     }),
   });
 
-  // internal plugin
   await server.register([
     {
       plugin: notes,
@@ -102,31 +101,16 @@ const init = async () => {
   ]);
 
   server.ext("onPreResponse", (request, h) => {
-    // get response from request
+    // mendapatkan konteks response dari request
     const { response } = request;
 
-    // handling client error internally
-    if (response instanceof Error) {
-      if (response instanceof ClientError) {
-        const newResponse = h.response({
-          status: "fail",
-          message: response.message,
-        });
-        newResponse.code(response.statusCode);
-        return newResponse;
-      }
-
-      // handling client error by hapi
-      if (!response.isServer) {
-        return h.continue;
-      }
-
-      // handling server error
+    // penanganan client error secara internal.
+    if (response instanceof ClientError) {
       const newResponse = h.response({
-        status: "error",
-        message: "Terjadi kegagalan pada server kami",
+        status: "fail",
+        message: response.message,
       });
-      newResponse.code(500);
+      newResponse.code(response.statusCode);
       return newResponse;
     }
 
